@@ -36,6 +36,7 @@ def index():
 
 @app.route('/layer', methods=['POST'])
 def get_layer():
+    print('here')
     city = request.form.get('city')
     layers = Layer.query.filter_by(city=city).all()
     # Process the list of layers as necessary
