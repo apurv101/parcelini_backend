@@ -16,6 +16,8 @@ db.init_app(app)
 migrate = Migrate(app, db)
 
 
+
+
 def instances_to_json(instances):
     table_name = instances[0].__tablename__  # get the table name from the first instance
     data = {}
@@ -34,6 +36,8 @@ def index():
     return 'Hello, world!'
 
 
+
+
 @app.route('/layer', methods=['POST'])
 def get_layer():
     print('here')
@@ -44,9 +48,8 @@ def get_layer():
         return instances_to_json(layers)
     else:
         return make_response('', 204)
+    
         
-        
-
 
 @app.route('/submit', methods=['POST'])
 def submit_query():
@@ -77,11 +80,65 @@ def traverse(root_link, city=None, folder_name = None, service_name = None, serv
                 layer = Layer(city=city, folder=folder_name, service_name=service_name, 
                                     service_type=service_type,
                                     layer_name=layer['name'], geometry_type=layer['geometryType'], 
-                                    url = root_link + '/' + service_name + '/' + service_type + '/'+ str(layer['id']))
+                                    url = root_link + '/'+ str(layer['id']))
                 db.session.add(layer)
                 db.session.commit()
                 
+
             
+
+def get_polygon_for_lat_lng(layer_id, lat, lng):
+    layer = Layer.query.filter_by(id=layer_id).first()
+    url = layer.url
+    arcgis_query = f'{url}/query?where=1%3D1&text=&objectIds=&time=&geometry={lng}%2C{lat}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&having=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&historicMoment=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentOnly=false&datumTransformation=&parameterValues=&rangeValues=&quantizationParameters=&featureEncoding=esriDefault&f=geojson'
+    print(arcgis_query)
+    response = requests.get(arcgis_query)
+    return response.json()
+
+
+def geocode_address(address):
+    GEOCODIO_API = os.environ.get("GEOCODIO_API")
+    address = address.replace(' ', '+')
+    url = f"https://api.geocod.io/v1.7/geocode?q={address}&api_key={GEOCODIO_API}"
+    response = requests.get(url)
+    data = response.json()
+    location = data['results'][0]
+    return location
+
+
+# def find_data_for_polygon_layers(city, lat, lng):
+#     layers = Layer.query.filter(
+#         Layer.city == city,
+#         Layer.geometry_type == 'esriGeometryPolygon'
+#     ).all()
+
+#     for layer in layers:
+#         data = get_polygon_for_lat_lng(layer.id, lat, lng)
+        
+    
+
+
+    
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

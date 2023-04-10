@@ -15,6 +15,7 @@ class Layer(db.Model):
     layer_name = db.Column(db.String(100))
     geometry_type = db.Column(db.String(50))
     url = db.Column(db.String(1000))
+    is_active = db.Column(db.Boolean, default=False)
 
 
 class Query(db.Model):
