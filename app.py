@@ -1,12 +1,13 @@
 
 
-from flask import Flask, jsonify, request, make_response
+from flask import Flask, jsonify, request, make_response, url_for
 from flask_migrate import Migrate
 import requests 
 from models import db, Layer, Query, DataPoint
 import os
 from dotenv import load_dotenv
-
+from celery import Celery
+import time
 
 
 app = Flask(__name__)
@@ -14,6 +15,33 @@ load_dotenv()
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL_PARCELINI")
 db.init_app(app)
 migrate = Migrate(app, db)
+
+
+# Configure Celery
+celery = Celery(
+    app.import_name,
+    broker=os.environ['REDIS_URL'],
+    backend=os.environ['REDIS_URL']
+)
+
+
+@celery.task(name='app.add_numbers')
+def add(x: int, y: int) -> int:
+    time.sleep(5)
+    return x + y
+
+
+# Define a route for testing
+@app.route('/add/<int:param1>/<int:param2>')
+def add(param1: int, param2: int) -> str:
+    task = celery.send_task('app.add_numbers', args=[param1, param2], kwargs={})
+    response = f"<a href='{url_for('check_task', task_id=task.id, external=True)}'>check status of {task.id} </a>"
+    return response
+
+@app.route('/check/<string:task_id>')
+def check_task(task_id: str) -> str:
+    res = celery.AsyncResult(task_id)
+    return res.state
 
 
 
