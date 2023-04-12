@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
-
+from uuid import uuid4
 
 
 
@@ -20,7 +20,7 @@ class Layer(db.Model):
 
 
 class Query(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=str(uuid4()))
     address = db.Column(db.String(100))
     email = db.Column(db.String(100))
     data_points = db.relationship('DataPoint', backref='query', lazy=True)
@@ -30,7 +30,7 @@ class DataPoint(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     properties = db.Column(db.JSON)
     layer_id = db.Column(db.Integer, db.ForeignKey('layer.id'), nullable=False)
-    query_id = db.Column(db.Integer, db.ForeignKey('query.id'), nullable=False)
+    query_id = db.Column(db.String(36), db.ForeignKey('query.id'), nullable=False)
 
 
 

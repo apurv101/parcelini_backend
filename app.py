@@ -58,7 +58,7 @@ def submit_query():
     query = Query(email=email, address=address)
     db.session.add(query)
     db.session.commit()
-    return 'Query submitted successfully!'
+    return jsonify({'id': query.id}), 201
 
 
 @app.route('/parcel_report/<int:query_id>')
