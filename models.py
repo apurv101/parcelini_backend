@@ -16,12 +16,28 @@ class Layer(db.Model):
     geometry_type = db.Column(db.String(50))
     url = db.Column(db.String(1000))
     is_active = db.Column(db.Boolean, default=False)
+    data_points = db.relationship('DataPoint', backref='layer', lazy=True)
 
 
 class Query(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     address = db.Column(db.String(100))
     email = db.Column(db.String(100))
+    data_points = db.relationship('DataPoint', backref='query', lazy=True)
+
+
+class DataPoint(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    properties = db.Column(db.JSON)
+    layer_id = db.Column(db.Integer, db.ForeignKey('layer.id'), nullable=False)
+    query_id = db.Column(db.Integer, db.ForeignKey('query.id'), nullable=False)
+
+
+
+
+
+
+
 
 
 

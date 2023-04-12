@@ -3,7 +3,7 @@
 from flask import Flask, jsonify, request, make_response
 from flask_migrate import Migrate
 import requests 
-from models import db, Layer, Query
+from models import db, Layer, Query, DataPoint
 import os
 from dotenv import load_dotenv
 
@@ -61,18 +61,54 @@ def submit_query():
     return 'Query submitted successfully!'
 
 
+@app.route('/parcel_report/<int:query_id>')
+def parcel_report(query_id):
+    data_points = db.session.query(DataPoint, Layer).\
+        join(Layer).\
+        join(Query).\
+        filter(Query.id == query_id).\
+        all()
+    
+    final_layers = []
+    
+    for data_point, layer in data_points:
+        data = {}
+        data['id'] = data_point.id
+        data['properties'] = data_point.properties
+        data['layer_name'] = layer.layer_name
+        data['service_name'] = layer.service_name
+        data['folder'] = layer.folder
+        data['url'] = layer.url
+        final_layers.append(data)
+
+    return final_layers
+
+
+
+
+
 
 def traverse(root_link, city=None, folder_name = None, service_name = None, service_type = None):
     json_data = requests.get(root_link + '?f=json')
-    data = json_data.json()
+    try:
+        data = json_data.json()
+    except:
+        data = {}
     if 'folders' in data.keys():
         for folder in data['folders']:
             traverse(root_link + '/' + folder, city=city, folder_name = folder)
     if 'services' in data.keys():
         for service in data['services']:
+            print(folder_name, service)
             if service['type'] in ['MapServer', 'FeatureServer']:
-                traverse(root_link + '/' + service['name'] + '/' + service['type'], city=city, folder_name=folder_name, 
-                         service_name = service['name'], service_type = service['type'])
+                if folder_name is None:
+                    print(root_link + '/' + service['name'] + '/' + service['type'])
+                    traverse(root_link + '/' + service['name'] + '/' + service['type'], city=city, folder_name=folder_name, 
+                             service_name = service['name'], service_type = service['type'])
+                else:
+                    link = (root_link + '/' + service['name'].split('/')[1] + '/' + service['type'])
+                    traverse(link, city=city, folder_name=folder_name, 
+                             service_name = service['name'], service_type = service['type'])
     if 'layers' in data.keys():
         for layer in data['layers']:
             if 'geometryType' in layer.keys():
@@ -106,37 +142,30 @@ def geocode_address(address):
     return location
 
 
-# def find_data_for_polygon_layers(city, lat, lng):
-#     layers = Layer.query.filter(
-#         Layer.city == city,
-#         Layer.geometry_type == 'esriGeometryPolygon'
-#     ).all()
+def find_and_save_data_for_polygon_layers(query_id):
 
-#     for layer in layers:
-#         data = get_polygon_for_lat_lng(layer.id, lat, lng)
-        
-    
+    print('here')
 
+    query = Query.query.filter_by(id=query_id).first()
+    result = geocode_address(query.address)
 
-    
+    print(result)
 
+    city = result['address_components']['city']
+    lat = result["location"]["lat"]
+    lng = result["location"]["lng"]
 
-    
+    layers = Layer.query.filter(
+        Layer.city == city,
+        Layer.geometry_type == 'esriGeometryPolygon',
+        Layer.is_active
+    ).all()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    for layer in layers:
+        data = get_polygon_for_lat_lng(layer.id, lat, lng)
+        data_point = DataPoint(properties=data, layer_id=layer.id, query_id=query_id)
+        db.session.add(data_point)
+        db.session.commit()
 
 
 
