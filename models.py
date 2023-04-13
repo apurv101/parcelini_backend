@@ -25,7 +25,7 @@ class Query(db.Model):
     email = db.Column(db.String(100))
     data_points = db.relationship('DataPoint', backref='query', lazy=True)
     task_id = db.Column(db.String(100))
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     __table_args__ = (
         db.UniqueConstraint('address', 'email', name='uix_field1_field2'),

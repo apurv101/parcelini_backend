@@ -90,7 +90,7 @@ def submit_query():
 
     new_uuid = uuid.uuid4()
 
-    created_at = datetime.datetime.now()
+    created_at = datetime.now()
 
     query = Query(id=new_uuid, email=email, address=address, created_at=created_at)
 
