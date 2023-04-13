@@ -8,7 +8,8 @@ import os
 from dotenv import load_dotenv
 from celery import Celery
 import time
-
+import uuid
+from datetime import datetime
 
 app = Flask(__name__)
 load_dotenv()
@@ -40,6 +41,9 @@ def add(param1: int, param2: int) -> str:
 
 @app.route('/check/<string:task_id>')
 def check_task(task_id: str) -> str:
+    for i in range(100):
+        print(i)
+        print("!"*1000)
     res = celery.AsyncResult(task_id)
     return res.state
 
@@ -79,14 +83,26 @@ def get_layer():
     
         
 
-@app.route('/submit', methods=['POST'])
+@app.route('/submit', methods=['POST', 'GET'])
 def submit_query():
     email = request.form['email']
     address = request.form['address']
-    query = Query(email=email, address=address)
+
+    new_uuid = uuid.uuid4()
+
+    created_at = datetime.utcnow
+
+    query = Query(id=new_uuid, email=email, address=address,created_at=created_at)
+
     db.session.add(query)
     db.session.commit()
-    return jsonify({'id': query.id}), 201
+
+    task = celery.send_task('app.find_and_save_data_for_polygon_layers', args=[new_uuid], kwargs={})
+
+    # query.task_id = task.id
+    # db.session.commit()
+
+    return jsonify({'id': new_uuid, 'task_id': task.id}), 201
 
 
 @app.route('/parcel_report/<int:query_id>')
@@ -170,30 +186,36 @@ def geocode_address(address):
     return location
 
 
+
+@celery.task(name='app.find_and_save_data_for_polygon_layers')
 def find_and_save_data_for_polygon_layers(query_id):
+    with app.app_context():
+        print('here')
+        query = Query.query.filter_by(id=query_id).first()
+        result = geocode_address(query.address)
 
-    print('here')
+        print(result)
 
-    query = Query.query.filter_by(id=query_id).first()
-    result = geocode_address(query.address)
+        city = result['address_components']['city']
+        lat = result["location"]["lat"]
+        lng = result["location"]["lng"]
 
-    print(result)
 
-    city = result['address_components']['city']
-    lat = result["location"]["lat"]
-    lng = result["location"]["lng"]
+        print(city, lat, lng)
 
-    layers = Layer.query.filter(
-        Layer.city == city,
-        Layer.geometry_type == 'esriGeometryPolygon',
-        Layer.is_active
-    ).all()
+        layers = Layer.query.filter(
+            Layer.city == city,
+            Layer.geometry_type == 'esriGeometryPolygon',
+            Layer.is_active
+        ).all()
 
-    for layer in layers:
-        data = get_polygon_for_lat_lng(layer.id, lat, lng)
-        data_point = DataPoint(properties=data, layer_id=layer.id, query_id=query_id)
-        db.session.add(data_point)
-        db.session.commit()
+        print(layers)
+
+        for layer in layers:
+            data = get_polygon_for_lat_lng(layer.id, lat, lng)
+            data_point = DataPoint(properties=data, layer_id=layer.id, query_id=query_id)
+            db.session.add(data_point)
+            db.session.commit()
 
 
 

@@ -2,7 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 from uuid import uuid4
-
+from datetime import datetime
 
 
 
@@ -24,6 +24,12 @@ class Query(db.Model):
     address = db.Column(db.String(100))
     email = db.Column(db.String(100))
     data_points = db.relationship('DataPoint', backref='query', lazy=True)
+    task_id = db.Column(db.String(100))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('address', 'email', name='uix_field1_field2'),
+    )
 
 
 class DataPoint(db.Model):
@@ -31,6 +37,7 @@ class DataPoint(db.Model):
     properties = db.Column(db.JSON)
     layer_id = db.Column(db.Integer, db.ForeignKey('layer.id'), nullable=False)
     query_id = db.Column(db.String(36), db.ForeignKey('query.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
 
