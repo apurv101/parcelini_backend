@@ -1,6 +1,6 @@
 
 
-from flask import Flask, jsonify, request, make_response, url_for
+from flask import Flask, jsonify, request, make_response, url_for, render_template
 from flask_migrate import Migrate
 import requests 
 from models import db, Layer, Query, DataPoint
@@ -10,12 +10,26 @@ from celery import Celery
 import time
 import uuid
 from datetime import datetime
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
 load_dotenv()
+
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL_PARCELINI")
+app.config['MAIL_SERVER'] = os.environ.get("MAIL_SERVER")
+app.config['MAIL_PORT'] = os.environ.get("MAIL_PORT")
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = os.environ.get("MAIL_USERNAME")
+app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASSWORD")
+
+
 db.init_app(app)
 migrate = Migrate(app, db)
+
+
+
+
+mail = Mail(app)
 
 
 # Configure Celery
@@ -83,13 +97,15 @@ def get_layer():
     
         
 
-@app.route('/submit', methods=['POST', 'GET'])
+@app.route('/submit', methods=['POST'])
 def submit_query():
     email = request.form['email']
     address = request.form['address']
 
     new_uuid = uuid.uuid4()
+    
 
+    
     created_at = datetime.now()
 
     query = Query(id=new_uuid, email=email, address=address, created_at=created_at)
@@ -99,8 +115,10 @@ def submit_query():
 
     task = celery.send_task('app.find_and_save_data_for_polygon_layers', args=[new_uuid], kwargs={})
 
-    # query.task_id = task.id
-    # db.session.commit()
+    query = Query.query.filter_by(id=str(new_uuid)).first()
+    query.task_id = task.id
+    db.session.commit()
+    
 
     return jsonify({'id': new_uuid, 'task_id': task.id}), 201
 
@@ -186,10 +204,23 @@ def geocode_address(address):
     return location
 
 
+def send_parcel_report_email(address, email):
+    message = Message(f'We are preparing your report for {address}', 
+                    sender='info@parcelini.com', 
+                    recipients=[email])
+    # message.body = 'This is a test email sent from Flask!'
+    message.html = render_template('report-prep.html', address=address)
+    mail.send(message)
+    print("Sent")
+    return 'Email sent!'
+
+
 
 @celery.task(name='app.find_and_save_data_for_polygon_layers')
 def find_and_save_data_for_polygon_layers(query_id):
+    time.sleep(10)
     with app.app_context():
+
         print('here')
         query = Query.query.filter_by(id=query_id).first()
         result = geocode_address(query.address)
@@ -199,6 +230,9 @@ def find_and_save_data_for_polygon_layers(query_id):
         city = result['address_components']['city']
         lat = result["location"]["lat"]
         lng = result["location"]["lng"]
+
+        print("Sending")
+        send_parcel_report_email(query.address, query.email)
 
 
         print(city, lat, lng)
@@ -216,6 +250,8 @@ def find_and_save_data_for_polygon_layers(query_id):
             data_point = DataPoint(properties=data, layer_id=layer.id, query_id=query_id)
             db.session.add(data_point)
             db.session.commit()
+
+        
 
 
 
