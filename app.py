@@ -306,7 +306,11 @@ def scrape():
             if link:
                 print("!!"* 100)
                 print(city)
-                traverse(link, city)
+                try:
+                    traverse(link, city)
+                except Exception as e:
+                    print(e)
+                    print(city, ' has error')
 
 
 
