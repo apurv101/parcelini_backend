@@ -14,7 +14,7 @@ class Layer(db.Model):
     service_type = db.Column(db.String(100))
     layer_name = db.Column(db.String(100))
     geometry_type = db.Column(db.String(50))
-    url = db.Column(db.String(1000))
+    url = db.Column(db.String(1000), unique=True)
     is_active = db.Column(db.Boolean, default=False)
     data_points = db.relationship('DataPoint', backref='layer', lazy=True)
     primary_parcel_layer = db.Column(db.Boolean, default=False)
