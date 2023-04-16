@@ -70,7 +70,7 @@ Clovis,https://gis.ci.clovis.ca.us/cloviswebgis/rest/services
 Jurupa Valley,
 South Gate,
 Vista,https://gisportal.cityofvista.com/gvgis/rest/services
-Mission Viejo,https://missionviejo.geoviewer.io/?q=drainage
+Mission Viejo,
 Vacaville,https://covgis.cityofvacaville.com/externalgis/rest/services
 Carson,
 Hesperia,
@@ -148,7 +148,7 @@ Rocklin,https://gis.rocklin.ca.us/server/rest/services
 Arcadia,
 Diamond Bar,https://services1.arcgis.com/yvWpR6DCcpIEETDL/ArcGIS/rest/services
 Woodland,https://gis.cityofwoodland.org/cowgis/rest/services
-Fountain Valley,https://maps.xymaps.com/FountainValley
+Fountain Valley,
 Porterville,https://services6.arcgis.com/KUb9MOaWQkVh1cNC/ArcGIS/rest/services
 Paramount,
 Hanford,
@@ -195,7 +195,7 @@ Coachella,
 La Puente,
 San Gabriel,
 Campbell,
-Brea,http://gisweb.cityofbrea.net/Html5Viewer/Index.html?viewer=zoning
+Brea,http://gisweb.cityofbrea.net/arcgis/rest/services
 Culver City,https://services2.arcgis.com/LNAhiRpezPbHTIUO/ArcGIS/rest/services
 Calexico,
 Stanton,

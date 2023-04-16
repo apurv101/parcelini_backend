@@ -199,10 +199,10 @@ def traverse(root_link, city=None, folder_name = None, service_name = None, serv
             traverse(root_link + '/' + folder, city=city, folder_name=folder)
     if 'services' in data.keys():
         for service in data['services']:
-            print(folder_name, service)
+            # print(folder_name, service)
             if service['type'] in ['MapServer', 'FeatureServer']:
                 if folder_name is None:
-                    print(root_link + '/' + service['name'] + '/' + service['type'])
+                    # print(root_link + '/' + service['name'] + '/' + service['type'])
                     traverse(root_link + '/' + service['name'] + '/' + service['type'], city=city, folder_name=folder_name, 
                              service_name = service['name'], service_type = service['type'])
                 else:
@@ -212,7 +212,7 @@ def traverse(root_link, city=None, folder_name = None, service_name = None, serv
     if 'layers' in data.keys():
         for layer in data['layers']:
             if 'geometryType' in layer.keys():
-                print(root_link + '/' + str(layer['id']), city, service_name, service_type, layer['name'], layer['geometryType'])
+                # print(root_link + '/' + str(layer['id']), city, service_name, service_type, layer['name'], layer['geometryType'])
                 layer = Layer(city=city, folder=folder_name, service_name=service_name, 
                                     service_type=service_type,
                                     layer_name=layer['name'], geometry_type=layer['geometryType'], 
