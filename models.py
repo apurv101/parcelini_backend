@@ -17,6 +17,7 @@ class Layer(db.Model):
     url = db.Column(db.String(1000))
     is_active = db.Column(db.Boolean, default=False)
     data_points = db.relationship('DataPoint', backref='layer', lazy=True)
+    primary_parcel_layer = db.Column(db.Boolean, default=False)
 
 
 class Query(db.Model):
@@ -25,6 +26,8 @@ class Query(db.Model):
     email = db.Column(db.String(100))
     data_points = db.relationship('DataPoint', backref='query', lazy=True)
     task_id = db.Column(db.String(100))
+    city = db.Column(db.String(100))
+    county = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     __table_args__ = (
@@ -35,9 +38,10 @@ class Query(db.Model):
 class DataPoint(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     properties = db.Column(db.JSON)
+    geometry = db.Column(db.JSON)
     layer_id = db.Column(db.Integer, db.ForeignKey('layer.id'), nullable=False)
     query_id = db.Column(db.String(36), db.ForeignKey('query.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
 
 

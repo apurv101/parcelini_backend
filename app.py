@@ -104,8 +104,6 @@ def submit_query():
 
     new_uuid = uuid.uuid4()
     
-
-    
     created_at = datetime.now()
 
     query = Query(id=new_uuid, email=email, address=address, created_at=created_at)
@@ -123,27 +121,66 @@ def submit_query():
     return jsonify({'id': new_uuid, 'task_id': task.id}), 201
 
 
-@app.route('/parcel_report/<int:query_id>')
-def parcel_report(query_id):
-    data_points = db.session.query(DataPoint, Layer).\
-        join(Layer).\
-        join(Query).\
-        filter(Query.id == query_id).\
-        all()
-    
-    final_layers = []
-    
-    for data_point, layer in data_points:
-        data = {}
-        data['id'] = data_point.id
-        data['properties'] = data_point.properties
-        data['layer_name'] = layer.layer_name
-        data['service_name'] = layer.service_name
-        data['folder'] = layer.folder
-        data['url'] = layer.url
-        final_layers.append(data)
 
-    return final_layers
+def generate_parcel_report(query_id):
+
+    query = Query.query.filter_by(id=query_id).first()
+    data_points = db.session.query(DataPoint, Layer).\
+            join(Layer).\
+            join(Query).\
+            filter(Query.id == query_id).\
+            all()
+    data = {}
+    if query.city in ['Los Angeles']:
+        for data_point, layer in data_points:
+            if layer.service_name not in data:
+                data[layer.service_name] = {}
+
+            if layer.layer_name not in data[layer.service_name]:
+                data[layer.service_name][layer.layer_name] = []
+
+            data[layer.service_name][layer.layer_name] = {}
+            data[layer.service_name][layer.layer_name]['id'] = data_point.id
+            print(data_point.properties.keys())
+            if 'features' in data_point.properties and len(data_point.properties['features']) > 0:
+                data[layer.service_name][layer.layer_name]['properties'] = data_point.properties['features'][0]['properties']
+            data[layer.service_name][layer.layer_name]['url'] = layer.url
+        return data
+    
+    if query.city in ['San Diego', 'San Jose']:
+        for data_point, layer in data_points:
+            if layer.folder not in data:
+                data[layer.folder] = {}
+
+            if layer.layer_name not in data[layer.folder]:
+                data[layer.folder][layer.layer_name] = []
+
+            data[layer.folder][layer.layer_name] = {}
+            data[layer.folder][layer.layer_name]['id'] = data_point.id
+            print(data_point.properties.keys())
+            if 'features' in data_point.properties and len(data_point.properties['features']) > 0:
+                data[layer.folder][layer.layer_name]['properties'] = data_point.properties['features'][0]['properties']
+            data[layer.folder][layer.layer_name]['url'] = layer.url
+        return data
+
+
+
+
+
+@app.route('/parcel_report', methods=['POST'])
+def parcel_report():
+    query_id = request.form['query_id']
+    # query = Query.query.filter_by(id=query_id).first()
+    return generate_parcel_report(query_id)
+
+
+
+@app.route('/parcel_report_template/<query_id>')
+def parcel_report_template(query_id):
+    data = generate_parcel_report(query_id)
+    return render_template('report_1.html', city_data=data)
+
+    
 
 
 
@@ -158,7 +195,7 @@ def traverse(root_link, city=None, folder_name = None, service_name = None, serv
         data = {}
     if 'folders' in data.keys():
         for folder in data['folders']:
-            traverse(root_link + '/' + folder, city=city, folder_name = folder)
+            traverse(root_link + '/' + folder, city=city, folder_name=folder)
     if 'services' in data.keys():
         for service in data['services']:
             print(folder_name, service)
@@ -228,6 +265,7 @@ def find_and_save_data_for_polygon_layers(query_id):
         print(result)
 
         city = result['address_components']['city']
+        county = result['address_components']['county']
         lat = result["location"]["lat"]
         lng = result["location"]["lng"]
 
@@ -237,6 +275,10 @@ def find_and_save_data_for_polygon_layers(query_id):
 
         print(city, lat, lng)
 
+
+        query.city = city
+        query.county = county
+        db.session.commit()
         layers = Layer.query.filter(
             Layer.city == city,
             Layer.geometry_type == 'esriGeometryPolygon',

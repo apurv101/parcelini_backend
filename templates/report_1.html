@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Report</title>
+    <style>
+        .department {
+          font-size: 24px;
+          font-weight: bold;
+          margin-top: 20px;
+        }
+      
+        .category {
+          font-size: 18px;
+          font-weight: bold;
+          margin-top: 10px;
+        }
+      
+        .property {
+          font-size: 16px;
+          margin-top: 5px;
+        }
+      
+        .id-url {
+          font-size: 14px;
+          margin-top: 5px;
+        }
+      </style>
+      
+  </head>
+  <body>
+    {% for department, data in city_data.items() %}
+    <div class="department">{{ department }}</div>
+    {% for category, info in data.items() %}
+    <div class="category">{{ category }}</div>
+    {% if 'properties' in info %}
+        {% for key, value in info.properties.items() %}
+        <div class="property">{{ key }}: {{ value }}</div>
+        {% endfor %}
+    {% else %}
+        <div>Not Applicable</div>
+    {% endif %}
+
+    {% endfor %}
+    {% endfor %}
+  </body>
+</html>
