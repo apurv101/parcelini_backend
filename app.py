@@ -217,9 +217,14 @@ def traverse(root_link, city=None, folder_name = None, service_name = None, serv
                                     service_type=service_type,
                                     layer_name=layer['name'], geometry_type=layer['geometryType'], 
                                     url = root_link + '/'+ str(layer['id']))
-                db.session.add(layer)
-                db.session.commit()
-                
+                try:
+                    db.session.add(layer)
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"Transaction rolled back due to exception: {e}")
+                    
+
 
             
 
