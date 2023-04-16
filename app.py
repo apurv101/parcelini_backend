@@ -11,6 +11,7 @@ import time
 import uuid
 from datetime import datetime
 from flask_mail import Mail, Message
+import csv
 
 app = Flask(__name__)
 load_dotenv()
@@ -296,7 +297,14 @@ def find_and_save_data_for_polygon_layers(query_id):
         
 
 
-
+def scrape():
+    with open('deep_links.csv', 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            city = row[0]
+            link = row[1]
+            if link:
+                traverse(link, city)
 
 
 
