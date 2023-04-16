@@ -304,6 +304,8 @@ def scrape():
             city = row[0]
             link = row[1]
             if link:
+                print("!!"* 100)
+                print(city)
                 traverse(link, city)
 
 
