@@ -15,6 +15,7 @@ import csv
 import pdfkit
 import boto3
 import platform, subprocess
+import sys
 
 
 app = Flask(__name__)
@@ -337,11 +338,20 @@ def find_and_save_data_for_polygon_layers(query_id):
             db.session.add(data_point)
             db.session.commit()
 
+        
+
 
         config = pdfkit.configuration(wkhtmltopdf='bin/wkhtmltopdf')
             
         html = parcel_report_template(query_id)
-        pdfkit.from_string(html, f'{query_id}.pdf', configuration=config)
+
+        time.sleep(5)
+
+        if sys.platform == "darwin":
+            pdfkit.from_string(html, f'{query_id}.pdf')
+        else:
+            pdfkit.from_string(html, f'{query_id}.pdf', configuration=config)
+        
 
         s3 = boto3.client('s3', 
                           aws_access_key_id=os.environ.get("AWS_ACCESS_KEY"), 
