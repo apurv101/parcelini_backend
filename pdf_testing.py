@@ -22,7 +22,10 @@ options = {
 
 
 query_id = '92bcc028-e963-470c-8fae-be3625e1b8a3'
+query_id = '4fb7b846-89c1-47a8-bc6c-8dab76795aaf'
 html = parcel_report_template(query_id)
+
+width = pdfkit.from_string(html, False, configuration=config, options={'page-size': 'A4'}).split('\n')[0].split()[-1]
 
 
 
