@@ -320,6 +320,7 @@ def find_and_save_data_for_polygon_layers(query_id):
         response = s3.upload_file(f'{query_id}.pdf', 'parcelini-reports', f'{query_id}.pdf')
         os.remove(f'{query_id}.pdf')
         print("DONE!!!!")
+        
 
         send_complete_parcel_report_email(query.address, query.email, f'https://parcelini-reports.s3.amazonaws.com/{query_id}.pdf')
 
