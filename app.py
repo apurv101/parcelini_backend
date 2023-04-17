@@ -188,7 +188,7 @@ def parcel_report_template(query_id):
 
 
 
-def traverse(root_link, city=None, folder_name = None, service_name = None, service_type = None):
+def traverse(root_link, city=None, county=None, folder_name = None, service_name = None, service_type = None):
     json_data = requests.get(root_link + '?f=json')
     try:
         data = json_data.json()
@@ -196,24 +196,24 @@ def traverse(root_link, city=None, folder_name = None, service_name = None, serv
         data = {}
     if 'folders' in data.keys():
         for folder in data['folders']:
-            traverse(root_link + '/' + folder, city=city, folder_name=folder)
+            traverse(root_link + '/' + folder, city=city, county=county, folder_name=folder)
     if 'services' in data.keys():
         for service in data['services']:
-            # print(folder_name, service)
+            print(folder_name, service)
             if service['type'] in ['MapServer', 'FeatureServer']:
                 if folder_name is None:
-                    # print(root_link + '/' + service['name'] + '/' + service['type'])
-                    traverse(root_link + '/' + service['name'] + '/' + service['type'], city=city, folder_name=folder_name, 
+                    print(root_link + '/' + service['name'] + '/' + service['type'])
+                    traverse(root_link + '/' + service['name'] + '/' + service['type'], city=city, county=county, folder_name=folder_name, 
                              service_name = service['name'], service_type = service['type'])
                 else:
                     link = (root_link + '/' + service['name'].split('/')[1] + '/' + service['type'])
-                    traverse(link, city=city, folder_name=folder_name, 
+                    traverse(link, city=city, county=county, folder_name=folder_name, 
                              service_name = service['name'], service_type = service['type'])
     if 'layers' in data.keys():
         for layer in data['layers']:
             if 'geometryType' in layer.keys():
-                # print(root_link + '/' + str(layer['id']), city, service_name, service_type, layer['name'], layer['geometryType'])
-                layer = Layer(city=city, folder=folder_name, service_name=service_name, 
+                print(root_link + '/' + str(layer['id']), city, service_name, service_type, layer['name'], layer['geometryType'])
+                layer = Layer(city=city, county=county, folder=folder_name, service_name=service_name, 
                                     service_type=service_type,
                                     layer_name=layer['name'], geometry_type=layer['geometryType'], 
                                     url = root_link + '/'+ str(layer['id']))
@@ -223,7 +223,7 @@ def traverse(root_link, city=None, folder_name = None, service_name = None, serv
                 except Exception as e:
                     db.session.rollback()
                     print(f"Transaction rolled back due to exception: {e}")
-                    
+
 
 
             
@@ -316,6 +316,21 @@ def scrape():
                 except Exception as e:
                     print(e)
                     print(city, ' has error')
+
+def scrape_county():
+    with open('deep_links_county.csv', 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            county = row[0]
+            link = row[1]
+            if link:
+                print("!!"* 100)
+                print(county)
+                try:
+                    traverse(link, county=county)
+                except Exception as e:
+                    print(e)
+                    print(county, ' has error')
 
 
 

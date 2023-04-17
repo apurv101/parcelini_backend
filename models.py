@@ -9,6 +9,7 @@ from datetime import datetime
 class Layer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     city = db.Column(db.String(100))
+    county = db.Column(db.String(100))
     folder = db.Column(db.String(100))
     service_name = db.Column(db.String(100))
     service_type = db.Column(db.String(100))
