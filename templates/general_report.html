@@ -4,10 +4,6 @@
 
     <title>Layer Information</title>
     <style>
-        @page {
-            size: A4;
-            margin: 0;
-        }
         table {
             border-collapse: collapse;
             width: 100%;
@@ -26,6 +22,11 @@
 
         tr {
             page-break-inside: avoid;
+        }
+
+        td {
+            word-wrap: break-word;
+            word-break: break-all;
         }
 
         tr:nth-child(even) {
