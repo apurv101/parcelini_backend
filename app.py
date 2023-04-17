@@ -12,6 +12,9 @@ import uuid
 from datetime import datetime
 from flask_mail import Mail, Message
 import csv
+import pdfkit
+import boto3
+
 
 app = Flask(__name__)
 load_dotenv()
@@ -256,6 +259,16 @@ def send_parcel_report_email(address, email):
     print("Sent")
     return 'Email sent!'
 
+def send_complete_parcel_report_email(address, email, href):
+    message = Message(f'Your report for {address} is ready', 
+                    sender='info@parcelini.com', 
+                    recipients=[email])
+    # message.body = 'This is a test email sent from Flask!'
+    message.html = render_template('report-complete.html', address=address, href=href)
+    mail.send(message)
+    print("Sent")
+    return 'Email sent!'
+
 
 
 @celery.task(name='app.find_and_save_data_for_polygon_layers')
@@ -277,7 +290,6 @@ def find_and_save_data_for_polygon_layers(query_id):
         print("Sending")
         send_parcel_report_email(query.address, query.email)
 
-
         print(city, lat, lng)
 
 
@@ -296,6 +308,26 @@ def find_and_save_data_for_polygon_layers(query_id):
             data_point = DataPoint(properties=data, layer_id=layer.id, query_id=query_id)
             db.session.add(data_point)
             db.session.commit()
+            
+        html = parcel_report_template(query_id)
+        pdfkit.from_string(html, f'{query_id}.pdf')
+
+        s3 = boto3.client('s3', 
+                          aws_access_key_id=os.environ.get("AWS_ACCESS_KEY"), 
+                          aws_secret_access_key=os.environ.get("AWS_SECRET_KEY"), 
+                          region_name=os.environ.get("REGION_NAME"))
+        
+        response = s3.upload_file(f'{query_id}.pdf', 'parcelini-reports', f'{query_id}.pdf')
+        os.remove(f'{query_id}.pdf')
+        print("DONE!!!!")
+
+        send_complete_parcel_report_email(query.address, query.email, f'https://parcelini-reports.s3.amazonaws.com/{query_id}.pdf')
+
+
+
+
+
+        
 
         
 
