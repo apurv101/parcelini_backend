@@ -342,7 +342,12 @@ def find_and_save_data_for_polygon_layers(query_id):
 
 
         config = pdfkit.configuration(wkhtmltopdf='bin/wkhtmltopdf')
-            
+        options = {
+            'page-size': 'A4',
+            'encoding': "UTF-8",
+            'zoom': '0.8'
+        }
+                    
         html = parcel_report_template(query_id)
 
         time.sleep(5)
@@ -350,7 +355,7 @@ def find_and_save_data_for_polygon_layers(query_id):
         if sys.platform == "darwin":
             pdfkit.from_string(html, f'{query_id}.pdf')
         else:
-            pdfkit.from_string(html, f'{query_id}.pdf', configuration=config)
+            pdfkit.from_string(html, f'{query_id}.pdf', configuration=config, options=options)
         
 
         s3 = boto3.client('s3', 
