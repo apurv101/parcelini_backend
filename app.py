@@ -26,6 +26,8 @@ app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get("MAIL_USERNAME")
 app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASSWORD")
 
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -320,7 +322,7 @@ def find_and_save_data_for_polygon_layers(query_id):
         response = s3.upload_file(f'{query_id}.pdf', 'parcelini-reports', f'{query_id}.pdf')
         os.remove(f'{query_id}.pdf')
         print("DONE!!!!")
-        
+
 
         send_complete_parcel_report_email(query.address, query.email, f'https://parcelini-reports.s3.amazonaws.com/{query_id}.pdf')
 
