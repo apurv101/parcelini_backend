@@ -350,7 +350,6 @@ def find_and_save_data_for_polygon_layers(query_id):
                     
         html = parcel_report_template(query_id)
 
-        time.sleep(5)
 
         if sys.platform == "darwin":
             pdfkit.from_string(html, f'{query_id}.pdf')
@@ -363,13 +362,14 @@ def find_and_save_data_for_polygon_layers(query_id):
                           aws_secret_access_key=os.environ.get("AWS_SECRET_KEY"), 
                           region_name=os.environ.get("REGION_NAME"))
         
+        send_complete_parcel_report_email(query.address, query.email, f'https://parcelini-reports.s3.amazonaws.com/{query_id}.pdf')
+        
         response = s3.upload_file(f'{query_id}.pdf', 'parcelini-reports', f'{query_id}.pdf')
         os.remove(f'{query_id}.pdf')
         print("DONE!!!!")
 
 
-        send_complete_parcel_report_email(query.address, query.email, f'https://parcelini-reports.s3.amazonaws.com/{query_id}.pdf')
-
+        
 
 
 
