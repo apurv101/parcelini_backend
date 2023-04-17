@@ -14,6 +14,7 @@ from flask_mail import Mail, Message
 import csv
 import pdfkit
 import boto3
+import platform, subprocess
 
 
 app = Flask(__name__)
@@ -26,7 +27,6 @@ app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get("MAIL_USERNAME")
 app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASSWORD")
 
-os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
 
 db.init_app(app)
@@ -100,6 +100,32 @@ def get_layer():
         return instances_to_json(layers)
     else:
         return make_response('', 204)
+    
+
+def _get_pdfkit_config():
+     """wkhtmltopdf lives and functions differently depending on Windows or Linux. We
+      need to support both since we develop on windows but deploy on Heroku.
+
+     Returns:
+         A pdfkit configuration
+     """
+     if platform.system() == 'Windows':
+         return pdfkit.configuration(wkhtmltopdf=os.environ.get('WKHTMLTOPDF_BINARY', 'C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe'))
+     else:
+         WKHTMLTOPDF_CMD = subprocess.Popen(['which', os.environ.get('WKHTMLTOPDF_BINARY', 'wkhtmltopdf')], stdout=subprocess.PIPE).communicate()[0].strip()
+         return pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_CMD)
+     
+
+def make_pdf_from_raw_html(html, options=None):
+    """Produces a pdf from raw html.
+    Args:
+        html (str): Valid html
+        options (dict, optional): for specifying pdf parameters like landscape
+            mode and margins
+    Returns:
+        pdf of the supplied html
+    """
+    return pdfkit.from_string(html, False, configuration=_get_pdfkit_config(), options=options)
     
         
 
@@ -312,14 +338,16 @@ def find_and_save_data_for_polygon_layers(query_id):
             db.session.commit()
             
         html = parcel_report_template(query_id)
-        pdfkit.from_string(html, f'{query_id}.pdf')
+        # pdfkit.from_string(html, f'{query_id}.pdf')
+
+        pdf = make_pdf_from_raw_html(html)
 
         s3 = boto3.client('s3', 
                           aws_access_key_id=os.environ.get("AWS_ACCESS_KEY"), 
                           aws_secret_access_key=os.environ.get("AWS_SECRET_KEY"), 
                           region_name=os.environ.get("REGION_NAME"))
         
-        response = s3.upload_file(f'{query_id}.pdf', 'parcelini-reports', f'{query_id}.pdf')
+        response = s3.upload_fileobj(pdf, 'parcelini-reports', f'{query_id}.pdf')
         os.remove(f'{query_id}.pdf')
         print("DONE!!!!")
 
