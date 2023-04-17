@@ -1,2 +1,5 @@
 libpcre2-16-0
+libqt5core5a
+libqt5gui5
+libqt5widgets5
 wkhtmltopdf
