@@ -131,39 +131,38 @@ def generate_parcel_report(query_id):
             join(Query).\
             filter(Query.id == query_id).\
             all()
-    data = {}
-    if query.city in ['Los Angeles']:
-        for data_point, layer in data_points:
-            if layer.service_name not in data:
-                data[layer.service_name] = {}
-
-            if layer.layer_name not in data[layer.service_name]:
-                data[layer.service_name][layer.layer_name] = []
-
-            data[layer.service_name][layer.layer_name] = {}
-            data[layer.service_name][layer.layer_name]['id'] = data_point.id
-            print(data_point.properties.keys())
-            if 'features' in data_point.properties and len(data_point.properties['features']) > 0:
-                data[layer.service_name][layer.layer_name]['properties'] = data_point.properties['features'][0]['properties']
-            data[layer.service_name][layer.layer_name]['url'] = layer.url
-        return data
     
-    if query.city in ['San Diego', 'San Jose']:
-        for data_point, layer in data_points:
-            if layer.folder not in data:
-                data[layer.folder] = {}
+    data = []
+    for data_point, layer in data_points:
+        data_attribute = {}
+        data_attribute["folder"] = layer.folder
+        data_attribute["service_name"] = layer.service_name
+        data_attribute["layer_name"] = layer.layer_name
+        data_attribute["url"] = layer.url
+        if 'features' in data_point.properties and len(data_point.properties['features']) > 0:
+            data_attribute['properties'] = data_point.properties['features'][0]['properties']
+        data.append(data_attribute)
+    return data
+    
 
-            if layer.layer_name not in data[layer.folder]:
-                data[layer.folder][layer.layer_name] = []
+    """
+    data = {}
+    for data_point, layer in data_points:
+        if layer.service_name not in data:
+            data[layer.service_name] = {}
 
-            data[layer.folder][layer.layer_name] = {}
-            data[layer.folder][layer.layer_name]['id'] = data_point.id
-            print(data_point.properties.keys())
-            if 'features' in data_point.properties and len(data_point.properties['features']) > 0:
-                data[layer.folder][layer.layer_name]['properties'] = data_point.properties['features'][0]['properties']
-            data[layer.folder][layer.layer_name]['url'] = layer.url
-        return data
+        if layer.layer_name not in data[layer.service_name]:
+            data[layer.service_name][layer.layer_name] = []
 
+        data[layer.service_name][layer.layer_name] = {}
+        data[layer.service_name][layer.layer_name]['id'] = data_point.id
+        print(data_point.properties.keys())
+        if 'features' in data_point.properties and len(data_point.properties['features']) > 0:
+            data[layer.service_name][layer.layer_name]['properties'] = data_point.properties['features'][0]['properties']
+        data[layer.service_name][layer.layer_name]['url'] = layer.url
+    return data
+    """
+    
 
 
 
@@ -179,7 +178,7 @@ def parcel_report():
 @app.route('/parcel_report_template/<query_id>')
 def parcel_report_template(query_id):
     data = generate_parcel_report(query_id)
-    return render_template('report_1.html', city_data=data)
+    return render_template('general_report.html', layers=data)
 
     
 
@@ -287,8 +286,7 @@ def find_and_save_data_for_polygon_layers(query_id):
         db.session.commit()
         layers = Layer.query.filter(
             Layer.city == city,
-            Layer.geometry_type == 'esriGeometryPolygon',
-            Layer.is_active
+            Layer.geometry_type == 'esriGeometryPolygon'
         ).all()
 
         print(layers)

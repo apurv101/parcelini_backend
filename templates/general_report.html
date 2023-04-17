@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Layer Information</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Layer Information</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Folder</th>
+                <th>Layer Name</th>
+                <th>Service Name</th>
+                <th>URL</th>
+                <th>Properties</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for layer in layers %}
+            <tr>
+                <td>{{ layer.folder }}</td>
+                <td>{{ layer.layer_name }}</td>
+                <td>{{ layer.service_name }}</td>
+                {% if layer.properties %}
+                <td>
+                    <table>
+                        {% for key, value in layer.properties.items() %}
+                        <tr>
+                            <td>{{ key }}</td>
+                            <td>{{ value }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </td>
+                {% else %}
+                <td></td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
