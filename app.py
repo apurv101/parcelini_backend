@@ -336,19 +336,19 @@ def find_and_save_data_for_polygon_layers(query_id):
             data_point = DataPoint(properties=data, layer_id=layer.id, query_id=query_id)
             db.session.add(data_point)
             db.session.commit()
+
+
+        config = pdfkit.configuration(wkhtmltopdf='bin/wkhtmltopdf')
             
         html = parcel_report_template(query_id)
-        # pdfkit.from_string(html, f'{query_id}.pdf')
-
-        pdf = make_pdf_from_raw_html(html)
-
+        pdfkit.from_string(html, f'{query_id}.pdf', configuration=config)
 
         s3 = boto3.client('s3', 
                           aws_access_key_id=os.environ.get("AWS_ACCESS_KEY"), 
                           aws_secret_access_key=os.environ.get("AWS_SECRET_KEY"), 
                           region_name=os.environ.get("REGION_NAME"))
         
-        response = s3.upload_fileobj(pdf, 'parcelini-reports', f'{query_id}.pdf')
+        response = s3.upload_file(f'{query_id}.pdf', 'parcelini-reports', f'{query_id}.pdf')
         os.remove(f'{query_id}.pdf')
         print("DONE!!!!")
 
