@@ -342,6 +342,7 @@ def find_and_save_data_for_polygon_layers(query_id):
 
         pdf = make_pdf_from_raw_html(html)
 
+
         s3 = boto3.client('s3', 
                           aws_access_key_id=os.environ.get("AWS_ACCESS_KEY"), 
                           aws_secret_access_key=os.environ.get("AWS_SECRET_KEY"), 
