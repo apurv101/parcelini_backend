@@ -435,8 +435,18 @@ def generate_question(word):
     return response["choices"][0]["message"]["content"]
 
 
-
-
+from models import Question
+def populate_db():
+    with open('barron_333.csv') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            word = row[0]
+            frequency = float(row[2])
+            question = generate_question(word)
+            print(question)
+            question = Question(word=word, frequency=frequency, openai_text=question)
+            db.session.add(question)
+            db.session.commit()
 
 
 
