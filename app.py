@@ -17,6 +17,7 @@ import boto3
 import platform, subprocess
 import sys
 import openai
+import re
 
 
 app = Flask(__name__)
@@ -447,6 +448,28 @@ def populate_db():
             question = TonicQuestion(word=word, frequency=frequency, openai_text=question)
             db.session.add(question)
             db.session.commit()
+
+
+def parse_the_question(question_text):
+    divisions = question_text.split("\n")
+    pattern = r"_{4,}"
+    divisions = [s for s in divisions if s != ""]
+    if re.search(pattern, divisions[0]):
+        question = divisions[0]
+        options = divisions[1:5]
+    elif re.search(pattern, divisions[1]):
+        question = divisions[1]
+        options = divisions[2:6]
+    options = [' '.join(options.split(' ')[1:]) for options in options]
+    return question, options
+
+
+
+    
+
+
+
+
 
 
 
