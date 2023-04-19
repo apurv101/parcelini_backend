@@ -16,6 +16,7 @@ import pdfkit
 import boto3
 import platform, subprocess
 import sys
+import openai
 
 
 app = Flask(__name__)
@@ -27,6 +28,9 @@ app.config['MAIL_PORT'] = os.environ.get("MAIL_PORT")
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get("MAIL_USERNAME")
 app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASSWORD")
+
+
+openai.api_key = os.environ.get("OPENAI_KEY")
 
 
 
@@ -68,7 +72,7 @@ def check_task(task_id: str) -> str:
     res = celery.AsyncResult(task_id)
     return res.state
 
-
+###############################################################################################
 
 
 def instances_to_json(instances):
@@ -410,6 +414,31 @@ def scrape_county():
                 except Exception as e:
                     print(e)
                     print(county, ' has error')
+
+
+
+
+
+
+###############################################################################################
+
+
+
+
+def generate_question(word):
+    response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=[
+            {"role": "user", "content": f"Write a GRE question with blank/blanks and four options whose answer is the word '{word}'\n"},
+        ]
+    )
+    return response["choices"][0]["message"]["content"]
+
+
+
+
+
+
 
 
 
