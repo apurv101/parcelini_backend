@@ -56,7 +56,7 @@ class TonicQuestion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     word = db.Column(db.String(100), nullable=False)
     frequency = db.Column(db.Float)
-    openai_text = db.Text()
+    openai_text = db.Column(db.Text)
 
 
 
