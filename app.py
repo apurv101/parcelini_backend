@@ -436,18 +436,16 @@ def generate_question(word):
     return response["choices"][0]["message"]["content"]
 
 
-from models import TonicQuestion
+from models import TonicQuestion, TonicWord
 def populate_db():
-    with open('barron_333.csv') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            word = row[0]
-            frequency = float(row[2])
-            question = generate_question(word)
-            print(question)
-            question = TonicQuestion(word=word, frequency=frequency, openai_text=question)
-            db.session.add(question)
-            db.session.commit()
+    words = TonicWord.query.all()
+    for word_instance in words:
+        word = word_instance.word
+        question = generate_question(word)
+        print(question)
+        question = TonicQuestion(word_id=word_instance.id, openai_text=question)
+        db.session.add(question)
+        db.session.commit()
 
 
 def parse_the_question(question_text):
@@ -462,6 +460,22 @@ def parse_the_question(question_text):
         options = divisions[2:6]
     options = [' '.join(options.split(' ')[1:]) for options in options]
     return question, options
+
+
+
+def generate_lesson(lesson_no):
+    low = (lesson_no-1)*30
+    high = (lesson_no)*30
+
+    questions = TonicQuestion.query.order_by(TonicQuestion.frequency.desc())[low:high]
+    
+    return instances_to_json(questions)
+
+
+
+
+
+
 
 
 

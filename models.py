@@ -57,6 +57,20 @@ class TonicQuestion(db.Model):
     word = db.Column(db.String(100), nullable=False)
     frequency = db.Column(db.Float)
     openai_text = db.Column(db.Text)
+    word_id = db.Column(db.Integer, db.ForeignKey('tonic_word.id'), nullable=False)
+    word = db.relationship(
+        'TonicWord', backref=db.backref('questions', lazy=True))
+    
+    
+
+class TonicWord(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    word = db.Column(db.String(100), nullable=False)
+    frequency = db.Column(db.Float)
+
+
+
+
 
 
 
