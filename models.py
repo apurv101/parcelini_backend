@@ -69,6 +69,21 @@ class TonicWord(db.Model):
     frequency = db.Column(db.Float)
 
 
+# class TonicUser(db.Model):
+#     id = db.Column(db.String(36), primary_key=True, default=str(uuid4()))
+
+
+# class TonicScore(db.Model):
+#     user_id = db.Column(db.String(36), db.ForeignKey('tonic_user.id'), nullable=False)
+#     user = db.relationship(
+#         'TonicUser', backref=db.backref('scores', lazy=True))
+#     question_id = db.Column(db.Integer, db.ForeignKey('tonic_question.id'), nullable=False)
+#     question = db.relationship(
+#         'TonicQuestion', backref=db.backref('question', lazy=True))
+#     answer_correct = db.Column(db.Boolean)
+
+    
+
 
 
 

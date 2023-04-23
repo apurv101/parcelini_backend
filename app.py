@@ -18,9 +18,12 @@ import platform, subprocess
 import sys
 import openai
 import re
+import json
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+CORS(app)
 load_dotenv()
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL_PARCELINI")
@@ -462,14 +465,64 @@ def parse_the_question(question_text):
     return question, options
 
 
-
+@app.route('/generate_lesson/<int:lesson_no>')
 def generate_lesson(lesson_no):
     low = (lesson_no-1)*30
     high = (lesson_no)*30
 
-    questions = TonicQuestion.query.order_by(TonicQuestion.frequency.desc())[low:high]
+    questions = TonicQuestion.query.all()[low:high]
     
-    return instances_to_json(questions)
+    # question_instances = instances_to_json(questions)
+
+    data = []
+
+    for ques in questions:
+        try:
+            question_instance = {}
+            id = ques.id
+            question, options = parse_the_question(ques.openai_text)
+            answer = ques.word.word
+            question_instance['id'] = id
+            question_instance['question'] = question
+            question_instance['options'] = options
+
+            correct_options = [option for option in options if answer.lower() == option.lower()]
+
+            if len(correct_options) == 1:
+                question_instance['correctAnswer'] = correct_options[0]
+                data.append(question_instance)
+        except:
+            pass
+    return data
+
+
+
+test_lesson_data=None
+with open('lesson_test.json') as f:
+    # Load the JSON data from the file
+    test_lesson_data = json.load(f)
+
+@app.route('/test_lesson_question_ids')
+def test_api_get_question_ids():
+    return jsonify(test_lesson_data) 
+
+test_data=None
+with open('test.json') as f:
+    # Load the JSON data from the file
+    test_data = json.load(f)
+
+@app.route('/test_question/<int:question_id>')
+def test_question(question_id):
+    result = next((item for item in test_data if item["id"] == question_id), None)
+    return jsonify(result)
+
+
+
+
+
+
+
+    
 
 
 
