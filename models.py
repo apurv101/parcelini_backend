@@ -82,7 +82,7 @@ class TonicUser(db.Model):
 #         'TonicQuestion', backref=db.backref('question', lazy=True))
 #     answer_correct = db.Column(db.Boolean)
 
-    
+
 
 
 

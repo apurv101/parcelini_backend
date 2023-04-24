@@ -439,7 +439,9 @@ def generate_question(word):
     return response["choices"][0]["message"]["content"]
 
 
-from models import TonicQuestion, TonicWord
+from models import TonicQuestion, TonicWord, TonicUser
+
+
 def populate_db():
     words = TonicWord.query.all()
     for word_instance in words:
@@ -517,6 +519,13 @@ def test_question(question_id):
     return jsonify(result)
 
 
+@app.route('/create_user_id')
+def create_user_id():
+    tu = TonicUser()
+    db.session.add(tu)
+    db.session.commit()
+
+    return jsonify(tu.id)
 
 
 
