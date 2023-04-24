@@ -69,8 +69,8 @@ class TonicWord(db.Model):
     frequency = db.Column(db.Float)
 
 
-# class TonicUser(db.Model):
-#     id = db.Column(db.String(36), primary_key=True, default=str(uuid4()))
+class TonicUser(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=str(uuid4()))
 
 
 # class TonicScore(db.Model):
