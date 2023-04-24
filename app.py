@@ -447,6 +447,7 @@ def populate_db():
     words = TonicWord.query.all()
     for word_instance in words:
         word = word_instance.word
+        time.sleep(5)
         question_text = generate_question(word)
         print(question_text)
         try:
