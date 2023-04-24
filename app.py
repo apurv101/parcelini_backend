@@ -521,7 +521,8 @@ def test_question(question_id):
 
 @app.route('/create_user_id')
 def create_user_id():
-    tu = TonicUser()
+    new_uuid = uuid.uuid4()
+    tu = TonicUser(id=new_uuid)
     db.session.add(tu)
     db.session.commit()
 
