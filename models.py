@@ -57,6 +57,12 @@ class TonicQuestion(db.Model):
     word = db.Column(db.String(100), nullable=False)
     frequency = db.Column(db.Float)
     openai_text = db.Column(db.Text)
+    question_text = db.Column(db.Text)
+    option1 = db.Column(db.String(100))
+    option2 = db.Column(db.String(100))
+    option3 = db.Column(db.String(100))
+    option4 = db.Column(db.String(100))
+    correct_answer = db.Column(db.String(100))
     word_id = db.Column(db.Integer, db.ForeignKey('tonic_word.id'), nullable=False)
     word = db.relationship(
         'TonicWord', backref=db.backref('questions', lazy=True))
@@ -67,26 +73,29 @@ class TonicWord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     word = db.Column(db.String(100), nullable=False)
     frequency = db.Column(db.Float)
+    lesson_id = db.Column(db.Integer, db.ForeignKey('tonic_lesson.id'))
+    lesson = db.relationship(
+        'TonicLesson', backref=db.backref('words', lazy=True))
+
 
 
 class TonicUser(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=str(uuid4()))
 
 
-# class TonicScore(db.Model):
-#     user_id = db.Column(db.String(36), db.ForeignKey('tonic_user.id'), nullable=False)
-#     user = db.relationship(
-#         'TonicUser', backref=db.backref('scores', lazy=True))
-#     question_id = db.Column(db.Integer, db.ForeignKey('tonic_question.id'), nullable=False)
-#     question = db.relationship(
-#         'TonicQuestion', backref=db.backref('question', lazy=True))
-#     answer_correct = db.Column(db.Boolean)
+class TonicLesson(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
 
 
-
-
-
-
-
-
+class TonicScore(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(36), db.ForeignKey('tonic_user.id'), nullable=False)
+    user = db.relationship(
+        'TonicUser', backref=db.backref('scores', lazy=True))
+    question_id = db.Column(db.Integer, db.ForeignKey('tonic_question.id'), nullable=False)
+    question = db.relationship(
+        'TonicQuestion', backref=db.backref('question', lazy=True))
+    answered_correct = db.Column(db.Boolean)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

@@ -20,6 +20,7 @@ import openai
 import re
 import json
 from flask_cors import CORS
+import sqlalchemy
 
 
 app = Flask(__name__)
@@ -439,17 +440,25 @@ def generate_question(word):
     return response["choices"][0]["message"]["content"]
 
 
-from models import TonicQuestion, TonicWord, TonicUser
+from models import TonicQuestion, TonicWord, TonicUser, TonicLesson, TonicScore
 
 
 def populate_db():
     words = TonicWord.query.all()
     for word_instance in words:
         word = word_instance.word
-        question = generate_question(word)
-        print(question)
-        question = TonicQuestion(word_id=word_instance.id, openai_text=question)
-        db.session.add(question)
+        question_text = generate_question(word)
+        print(question_text)
+        try:
+            question, options = parse_the_question(question_text)
+            correct_options = [option for option in options if word.lower() == option.lower()]
+            ques = TonicQuestion(word_id=word_instance.id, openai_text=question_text, question_text=question, 
+                                 option1=options[0],option2=options[1],option3=options[2],option4=options[3],correct_answer=correct_options[0])
+            db.session.add(ques)
+        except:
+            ques = TonicQuestion(word_id=word_instance.id, openai_text=question_text)
+            db.session.add(ques)
+
         db.session.commit()
 
 
@@ -508,6 +517,44 @@ with open('lesson_test.json') as f:
 def test_api_get_question_ids():
     return jsonify(test_lesson_data) 
 
+
+@app.route('/lesson_question_ids/<user_id>')
+def get_lessons_with_question_ids_and_user_progress(user_id):
+    lessons = TonicLesson.query.all()
+    result = []
+    for lesson in lessons[0:1]:
+        question_ids = []
+        progress_status = []
+        for word in lesson.words[:5]:
+            for question in word.questions:
+                question_ids.append(question.id)
+                # Get the progress status for the current user and question
+                score = TonicScore.query.filter_by(user_id=user_id, question_id=question.id).first()
+                if score:
+                    progress_status.append(score.answered_correct)
+                else:
+                    progress_status.append(None)
+        result.append({
+            'id': lesson.id,
+            'title': lesson.title,
+            'question_ids': question_ids,
+            'progress_status': progress_status
+        })
+    return result
+
+
+@app.route('/update_tonic_score', methods=['POST'])
+def update_tonic_score():
+    user_id = request.form.get('user_id')
+    question_id = request.form.get('question_id')
+    answered_correct = bool(request.form.get('answered_correct'))
+    ts = TonicScore(user_id=user_id, question_id=question_id, answered_correct=answered_correct)
+    db.session.add(ts)
+    db.session.commit()
+    return '', 204
+
+
+
 test_data=None
 with open('test.json') as f:
     # Load the JSON data from the file
@@ -519,6 +566,8 @@ def test_question(question_id):
     return jsonify(result)
 
 
+
+
 @app.route('/create_user_id')
 def create_user_id():
     new_uuid = uuid.uuid4()
@@ -527,6 +576,42 @@ def create_user_id():
     db.session.commit()
 
     return jsonify(tu.id)
+
+
+
+def update_gre_words():
+    with open('gre_words_1.csv', 'r') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            word = row[0].lower()
+            print(word)
+            frequency = int(row[1])
+            existing_word = TonicWord.query.filter_by(word=word).first()
+            if existing_word:
+                existing_word.frequency = frequency
+            else:
+                new_word = TonicWord(word=word, frequency=frequency)
+                db.session.add(new_word)
+        db.session.commit()
+
+
+def create_lessons():
+    words = TonicWord.query.filter_by(lesson_id=None).order_by(sqlalchemy.func.random(), TonicWord.frequency.desc()).all()
+    num_words = len(words)
+    num_lessons = (num_words // 50) + 1
+    print(words)
+    
+    for i in range(num_lessons):
+        lesson_title = f'Common Words - {chr(65+i)}'
+        lesson = TonicLesson(title=lesson_title)
+        db.session.add(lesson)
+        db.session.flush()
+        
+        for word in words[i*50:(i+1)*50]:
+            word.lesson_id = lesson.id
+            db.session.add(word)
+            
+    db.session.commit()
 
 
 
