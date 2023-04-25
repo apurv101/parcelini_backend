@@ -95,7 +95,7 @@ class TonicScore(db.Model):
         'TonicUser', backref=db.backref('scores', lazy=True))
     question_id = db.Column(db.Integer, db.ForeignKey('tonic_question.id'), nullable=False)
     question = db.relationship(
-        'TonicQuestion', backref=db.backref('question', lazy=True))
+        'TonicQuestion', backref=db.backref('scores', lazy=True))
     answered_correct = db.Column(db.Boolean)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

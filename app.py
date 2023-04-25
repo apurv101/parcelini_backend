@@ -1,6 +1,6 @@
 
 
-from flask import Flask, jsonify, request, make_response, url_for, render_template
+from flask import Flask, jsonify, request, make_response, url_for, render_template, request
 from flask_migrate import Migrate
 import requests 
 from models import db, Layer, Query, DataPoint
@@ -347,11 +347,6 @@ def find_and_save_data_for_polygon_layers(query_id):
             db.session.add(data_point)
             db.session.commit()
 
-        
-
-
-        
-        
                     
         html = parcel_report_template(query_id)
 
@@ -379,15 +374,6 @@ def find_and_save_data_for_polygon_layers(query_id):
         os.remove(f'{query_id}.pdf')
         print("DONE!!!!")
 
-
-        
-
-
-
-
-        
-
-        
 
 
 def scrape():
@@ -482,37 +468,6 @@ def parse_the_question(question_text):
     return question, options
 
 
-@app.route('/generate_lesson/<int:lesson_no>')
-def generate_lesson(lesson_no):
-    low = (lesson_no-1)*30
-    high = (lesson_no)*30
-
-    questions = TonicQuestion.query.all()[low:high]
-    
-    # question_instances = instances_to_json(questions)
-
-    data = []
-
-    for ques in questions:
-        try:
-            question_instance = {}
-            id = ques.id
-            question, options = parse_the_question(ques.openai_text)
-            answer = ques.word.word
-            question_instance['id'] = id
-            question_instance['question'] = question
-            question_instance['options'] = options
-
-            correct_options = [option for option in options if answer.lower() == option.lower()]
-
-            if len(correct_options) == 1:
-                question_instance['correctAnswer'] = correct_options[0]
-                data.append(question_instance)
-        except:
-            pass
-    return data
-
-
 
 test_lesson_data=None
 with open('lesson_test.json') as f:
@@ -533,13 +488,14 @@ def get_lessons_with_question_ids_and_user_progress(user_id):
         progress_status = []
         for word in lesson.words[:5]:
             for question in word.questions:
-                question_ids.append(question.id)
-                # Get the progress status for the current user and question
-                score = TonicScore.query.filter_by(user_id=user_id, question_id=question.id).first()
-                if score:
-                    progress_status.append(score.answered_correct)
-                else:
-                    progress_status.append(None)
+                if question.question_text is not None and question.question_text != '':
+                    question_ids.append(question.id)
+                    # Get the progress status for the current user and question
+                    score = TonicScore.query.filter_by(user_id=user_id, question_id=question.id).first()
+                    if score:
+                        progress_status.append(score.answered_correct)
+                    else:
+                        progress_status.append(None)
         result.append({
             'id': lesson.id,
             'title': lesson.title,
@@ -548,12 +504,47 @@ def get_lessons_with_question_ids_and_user_progress(user_id):
         })
     return result
 
+@app.route('/get_lessons/<user_id>')
+def get_lessons(user_id):
+    print(user_id)
+    lessons = TonicLesson.query.all()
+    data = []
+    for lesson in lessons:
+        data.append({'id': lesson.id, 'title': lesson.title})
+    return jsonify(data)
+
+
+
+@app.route('/lesson_question_ids/<lesson_id>/<user_id>')
+def get_quetion_ids_and_progress_for_lesson(lesson_id, user_id):
+    lesson = TonicLesson.query.filter_by(id=lesson_id).first()
+    question_ids = []
+    progress_status = []
+    for word in lesson.words:
+        for question in word.questions[:1]:
+            if question.question_text is not None and question.question_text != '':
+                question_ids.append(question.id)
+                # Get the progress status for the current user and question
+                score = TonicScore.query.filter_by(user_id=user_id, question_id=question.id).first()
+                if score:
+                    progress_status.append(score.answered_correct)
+                else:
+                    progress_status.append(None)
+    return {
+            'id': lesson.id,
+            'title': lesson.title,
+            'question_ids': question_ids,
+            'progress_status': progress_status
+        }
+
+
 
 @app.route('/update_tonic_score', methods=['POST'])
 def update_tonic_score():
-    user_id = request.form.get('user_id')
-    question_id = request.form.get('question_id')
-    answered_correct = bool(request.form.get('answered_correct'))
+    data = request.json
+    user_id = data['user_id']
+    question_id = data['question_id']
+    answered_correct = data['answered_correct']
     ts = TonicScore(user_id=user_id, question_id=question_id, answered_correct=answered_correct)
     db.session.add(ts)
     db.session.commit()
@@ -570,6 +561,16 @@ with open('test.json') as f:
 def test_question(question_id):
     result = next((item for item in test_data if item["id"] == question_id), None)
     return jsonify(result)
+
+@app.route('/get_question/<int:question_id>')
+def get_question(question_id):
+    result = TonicQuestion.query.filter_by(id=question_id).first()
+    data = {}
+    data['id'] = question_id
+    data['question'] = result.question_text
+    data['options'] = [result.option1, result.option2, result.option3, result.option4]
+    data['answer'] = result.correct_answer
+    return jsonify(data)
 
 
 
@@ -618,29 +619,6 @@ def create_lessons():
             db.session.add(word)
             
     db.session.commit()
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
 
 
 
