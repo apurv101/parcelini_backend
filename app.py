@@ -447,7 +447,9 @@ def populate_db():
     # words = TonicWord.query.all()
     words = db.session.query(TonicWord)\
         .outerjoin(TonicQuestion, TonicWord.id == TonicQuestion.word_id)\
-        .filter(TonicQuestion.word_id == None).all()
+        .group_by(TonicWord)\
+        .having(sqlalchemy.func.count(TonicQuestion.id) <= 1)\
+        .all()
     for word_instance in words:
         word = word_instance.word
         time.sleep(5)
