@@ -570,6 +570,7 @@ def get_question(question_id):
     data['question'] = result.question_text
     data['options'] = [result.option1, result.option2, result.option3, result.option4]
     data['answer'] = result.correct_answer
+    data['meaning'] = result.word.meaning
     return jsonify(data)
 
 
@@ -600,6 +601,32 @@ def update_gre_words():
                 new_word = TonicWord(word=word, frequency=frequency)
                 db.session.add(new_word)
         db.session.commit()
+
+
+def update_meanings():
+    with open('meaning.txt', 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            try:
+                if ':' in line:
+                    word, meaning = [x.strip().lower() for x in line.split(':')]
+                elif '-' in line:
+                    splits = [x.strip().lower() for x in line.split('-')]
+                    if len(splits) == 2:
+                        word, meaning = splits
+                    else:
+                        word, meaning = splits[0], '-'.join(splits[1:])
+                    
+                print(word, meaning)
+                t_word = TonicWord.query.filter_by(word=word).first()
+                t_word.meaning = meaning
+                db.session.add(t_word)
+            except:
+                print("!"*100)
+                print(line)
+        db.session.commit()
+            
+        
 
 
 def create_lessons():

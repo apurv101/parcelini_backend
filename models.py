@@ -73,6 +73,7 @@ class TonicWord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     word = db.Column(db.String(100), nullable=False)
     frequency = db.Column(db.Float)
+    meaning = db.Column(db.Text)
     lesson_id = db.Column(db.Integer, db.ForeignKey('tonic_lesson.id'))
     lesson = db.relationship(
         'TonicLesson', backref=db.backref('words', lazy=True))
