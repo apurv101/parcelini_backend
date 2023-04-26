@@ -426,7 +426,7 @@ def generate_question(word):
     return response["choices"][0]["message"]["content"]
 
 
-from models import TonicQuestion, TonicWord, TonicUser, TonicLesson, TonicScore
+from models import TonicQuestion, TonicWord, TonicUser, TonicLesson, TonicScore, TonicLessonStats
 
 
 def populate_db():
@@ -584,6 +584,40 @@ def create_user_id():
     db.session.commit()
 
     return jsonify(tu.id)
+
+
+def update_lesson_stats():
+    users = TonicUser.query.all()
+    lessons = TonicLesson.query.all()
+    for user in users:
+        for lesson in lessons:
+            total_questions = 0
+            correct = 0
+            incorrect = 0
+            for word in lesson.words:
+                for question in word.questions[:1]:
+                    if question.question_text is not None and question.question_text != '':
+                        total_questions = total_questions + 1
+                        # Get the progress status for the current user and question
+                        score = TonicScore.query.filter_by(user_id=user.id, question_id=question.id).first()
+                        if score:
+                            if score.answered_correct:
+                                correct = correct + 1
+                            else:
+                                incorrect = incorrect + 1
+            stat = TonicLessonStats(lesson_id=lesson.id, user_id=user.id, correct_answered=correct, incorrect_answered=incorrect)
+            db.session.add(stat)
+            print(correct, incorrect, total_questions)
+    db.session.commit()
+                        
+
+
+
+
+
+
+
+
 
 
 

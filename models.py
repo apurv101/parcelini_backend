@@ -82,11 +82,31 @@ class TonicWord(db.Model):
 
 class TonicUser(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=str(uuid4()))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class TonicLesson(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
+    @property
+    def num_words(self):
+        return len(self.words)
+
+class TonicLessonStats(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(36), db.ForeignKey('tonic_user.id'), nullable=False)
+    user = db.relationship(
+        'TonicUser', backref=db.backref('stats', lazy=True))
+    lesson_id = db.Column(db.Integer, db.ForeignKey('tonic_lesson.id'), nullable=False)
+    lesson = db.relationship(
+        'TonicLesson', backref=db.backref('stats', lazy=True))
+    correct_answered = db.Column(db.Integer)
+    incorrect_answered = db.Column(db.Integer)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'lesson_id', name='uix_user_lesson'),
+    )
+
 
 
 class TonicScore(db.Model):
@@ -99,4 +119,8 @@ class TonicScore(db.Model):
         'TonicQuestion', backref=db.backref('scores', lazy=True))
     answered_correct = db.Column(db.Boolean)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'question_id', name='uix_user_question'),
+    )
 
