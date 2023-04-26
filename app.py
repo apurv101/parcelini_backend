@@ -510,7 +510,19 @@ def get_lessons(user_id):
     lessons = TonicLesson.query.all()
     data = []
     for lesson in lessons:
-        data.append({'id': lesson.id, 'title': lesson.title})
+        stats = TonicLessonStats.query.filter_by(user_id=user_id, lesson_id=lesson.id).first()
+        total_questions = lesson.num_words
+        if stats:
+            correct_answered = stats.correct_answered
+            incorrect_answered = stats.incorrect_answered
+        else:
+            correct_answered = 0
+            incorrect_answered = 0
+
+        data.append({'id': lesson.id, 'title': lesson.title, 
+                     'total_questions':total_questions, 
+                     'correct_answered':correct_answered,
+                     'incorrect_answered':incorrect_answered})
     return jsonify(data)
 
 
@@ -544,10 +556,32 @@ def update_tonic_score():
     data = request.json
     user_id = data['user_id']
     question_id = data['question_id']
+    lesson_id = data['lesson_id']
     answered_correct = data['answered_correct']
     ts = TonicScore(user_id=user_id, question_id=question_id, answered_correct=answered_correct)
     db.session.add(ts)
+
+    existing_record = TonicLessonStats.query.filter_by(user_id=user_id, lesson_id=lesson_id).first()
+    if existing_record:
+        if answered_correct:
+            existing_record.correct_answered = existing_record.correct_answered + 1
+        else:
+            existing_record.incorrect_answered = existing_record.incorrect_answered + 1
+    else:
+        # Create new record
+        new_record = TonicLessonStats(user_id=user_id, lesson_id=lesson_id)
+        if answered_correct:
+            new_record.correct_answered = 1
+            new_record.incorrect_answered = 0
+        else:
+            new_record.correct_answered = 0
+            new_record.incorrect_answered = 1
+
+        db.session.add(new_record)
+
     db.session.commit()
+
+
     return '', 204
 
 

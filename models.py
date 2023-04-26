@@ -100,8 +100,8 @@ class TonicLessonStats(db.Model):
     lesson_id = db.Column(db.Integer, db.ForeignKey('tonic_lesson.id'), nullable=False)
     lesson = db.relationship(
         'TonicLesson', backref=db.backref('stats', lazy=True))
-    correct_answered = db.Column(db.Integer)
-    incorrect_answered = db.Column(db.Integer)
+    correct_answered = db.Column(db.Integer, default=0)
+    incorrect_answered = db.Column(db.Integer, default=0)
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'lesson_id', name='uix_user_lesson'),
