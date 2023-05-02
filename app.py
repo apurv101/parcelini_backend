@@ -534,7 +534,7 @@ def get_quetion_ids_and_progress_for_lesson(lesson_id, user_id):
     progress_status = []
     for word in lesson.words:
         for question in word.questions[:1]:
-            if question.question_text is not None and question.question_text != '':
+            if question.question_text is not None and question.correct_answer is not None and question.question_text != '':
                 question_ids.append(question.id)
                 # Get the progress status for the current user and question
                 score = TonicScore.query.filter_by(user_id=user_id, question_id=question.id).first()
