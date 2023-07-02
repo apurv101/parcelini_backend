@@ -34,7 +34,7 @@ Follow these steps to set up and run the project:
    `docker run -d -p 6379:6379 redis`
 
 7. Run the Celery worker:
-   `celery worker -A app.celery --loglevel=info`
+   `celery -A app.celery worker --loglevel=info`
 
 ## Usage
 
